@@ -48,16 +48,10 @@ class Net(nn.Module):
 
 
 class DQN(object):
-    def __init__(self,mlp_architecture):
+    def __init__(self):
 
-
-        # mlp_architecture 是一个列表，描述了要求的神经网络的结构 每层几个神经元
-        # N_STATES 是输入层神经元的个数
-        # N_ACTIONS 是输出层神经元的个数
-        
         self.MEMORY_CAPACITY = 2000
-        self.N_STATES = mlp_architecture[0]
-        self.N_ACTIONS = mlp_architecture[-1]
+        self.N_STATES = 4
         lr = 0.01
 
         self.eval_net, self.target_net = Net(), Net()
@@ -69,30 +63,32 @@ class DQN(object):
         self.loss_func = nn.MSELoss()
 
         #pid
-        self.integral = 0  # 位移的积分
+        self.i = 0  # 位移的积分
         self.max_i = 2**6 # 位移积分的上界
         self.ki= -3 #-1
-
-    def random_action(self):
-
-        N_ACTIONS = self.N_ACTIONS
-        action = np.random.randint(0, N_ACTIONS)
-        return action
-    
 
     def choose_action(self, x):
         x = torch.unsqueeze(torch.FloatTensor(x), 0)
 
+        # print(x.dtype)
+        # print('x',x)
+        # print('x.s',x.shape)
+        # input only one sample
         EPSILON = self.epsilon
         ENV_A_SHAPE = 0
+        N_ACTIONS = 2
 
         if np.random.uniform() < EPSILON:   # greedy
+        # if True:
             actions_value = self.eval_net.forward(x)
+
+            # print(actions_value)
+            # exit()
 
             action = torch.max(actions_value, 1)[1].data.numpy()
             action = action[0] if ENV_A_SHAPE == 0 else action.reshape(ENV_A_SHAPE)  # return the argmax index
         else:   # random
-            action = self.random_action()
+            action = np.random.randint(0, N_ACTIONS)
             action = action if ENV_A_SHAPE == 0 else action.reshape(ENV_A_SHAPE)
 
 
@@ -113,9 +109,7 @@ class DQN(object):
         TARGET_REPLACE_ITER = 100
         MEMORY_CAPACITY = 2000
         BATCH_SIZE = 32
-        N_STATES = self.N_STATES
-
-
+        N_STATES = 4
         GAMMA = 0.9
 
 
@@ -146,70 +140,78 @@ class DQN(object):
 
     def get_i(self):
         # 解码
-        integral = self.integral      
+        i = self.i      
         error = self.error
 
         # 计算积分
-        # integral += error
+        # i += error
         error = abs(error)
 
         alpha = 0.5
-        # integral = (1-alpha)*integral + alpha*error
-        integral = (1-alpha)*integral + error
+        i = (1-alpha)*i + alpha*error
 
         # 无界变换成有界有多种函数 ，这里随便写一种简单的。不是我们的重点。
 
-        # print(integral)
-        if(abs(integral)>self.max_i):
-            print('积分爆了')
-            if integral>0:
-                integral = self.max_i
+        if(abs(i)>self.max_i):
+            if i>0:
+                i = self.max_i
             else:
-                integral = -self.max_i
+                i = -self.max_i
 
         # 更新
-        self.integral = integral
-        return integral
+        self.i = i
+        return i
 
     def reward_f(self,next_state):
 
         x, x_dot, theta, theta_dot = next_state
 
-        # pid算法
+        # r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
+        # r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+
+        # 现在准备加入pid算法
         self.error = x
-        integral = self.get_i()
-        ri = integral* self.ki
+        i = self.get_i()
+        ri = i* self.ki
         
+        # print('ri',ri,'x',x)
+        # ri = 0
         
         r0 = 0.7
         r1 = -abs(x)/2.4
         r2 = -abs(theta)/0.209
 
         reward = r0 +r1 + r2 + ri
-        if(reward< 2**-10):reward = 2**-10
+        if(reward<0):reward = 2**-10
 
         reward = reward**2
 
+        # print('rr',r1+r2,ri,reward,x)
+        # print('ratio',ri/reward)
+
+        # print(reward,x)
         return reward
     
 
 class cart_pole():
     def main(self):
 
-        okg = 0
-        enough = 2**13
-
-
+        # Hyper Parameters
+        BATCH_SIZE = 32
+        LR = 0.01                   # learning rate
+        EPSILON = 0.9               # greedy policy
+        GAMMA = 0.9                 # reward discount
+        TARGET_REPLACE_ITER = 100   # target update frequency
+        MEMORY_CAPACITY = 2000
         env = gym.make('CartPole-v1')
         env = env.unwrapped
         N_ACTIONS = env.action_space.n
         N_STATES = env.observation_space.shape[0]
-
-        mlp_architecture = [N_STATES,50,N_ACTIONS]
-
-        dqn = DQN(mlp_architecture) # init 
+        ENV_A_SHAPE = 0 if isinstance(env.action_space.sample(), int) else env.action_space.sample().shape     # to confirm the shape
 
 
+
+        dqn = DQN() # init 
         EPSILON = 0.9
 
         plt_on = 1  # 是否显示图表
@@ -230,8 +232,8 @@ class cart_pole():
 
 
         tlun = 0
-        stt = 0
         while(1):
+            stt = 0
 
             if(tlun ==0):
                 EPSILON = 0.9
@@ -242,17 +244,12 @@ class cart_pole():
             elif(tlun ==2):
                 EPSILON = 0.9
                 qline = 0.5
-
-
             elif(tlun ==3):
                 EPSILON = 0.9
                 qline = 0.24
             elif(tlun ==4):
                 EPSILON = 1
                 qline = 0.24
-
-
-
 
             # self.epsilon = EPSILON
             dqn.epsilon = EPSILON
@@ -282,45 +279,44 @@ class cart_pole():
                     step +=1
                     stt+=1
 
-                    if(step>enough):
-                        okg = 1
+                    if(step>2**16):
+                        
                         break
 
-                    if(step%2**9==0):
-                        # print(step,state,next_state)
+                    if(step%2**13==0):
+                        print(step,state,next_state)
 
                         t_list.append(stt)
                         x_list.append(abs(x))
+                        xd_list.append(xd)
+                        th_list.append(th)
+                        thd_list.append(thd)
                         plt.plot(t_list,x_list,c='red')
 
-                        plt.pause(0.001)
+                        # plt.plot(t_list,xd_list,c='yellow')
+                        # plt.plot(t_list,th_list,c='green')
+                        # plt.plot(t_list,thd_list,c='blue')
+                        plt.pause(0.1)
                 dqn.learn()
                 
                 i_episode+=1
 
-                if(step>=enough):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
+                if(step>=2**12):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
                     x,_,_,_ = state
                     if(abs(x)<qline):
-                        if(tlun>=3):
-                            if(abs(x)>qline/4):
-                                break
-                            else:
-                                print('x 太小也不好',x,qline)
-                        else:
+                        if(step>2**16):
                             break
-            if(okg==1):
 
-                print('合格',tlun,abs(x))
-                print('\a')
-                print('ep:',i_episode,'step',step,state)
+            print('合格',tlun,abs(x))
+            print('\a')
+            print('ep:',i_episode,'step',step,state)
 
-                if(tlun>=   4   ):
-                    
-                    with open('./a.pkl', "wb") as f:
-                        pickle.dump(dqn, f)
-                    break
+            if(tlun>=   4   ):
+                
+                with open('./a.pkl', "wb") as f:
+                    pickle.dump(dqn, f)
+                break
 
-                tlun +=1
-                okg =0
+            tlun +=1
 
 cart_pole().main()

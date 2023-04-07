@@ -196,7 +196,6 @@ class DQN(object):
 class cart_pole():
     def main(self):
 
-        okg = 0
         enough = 2**13
 
 
@@ -230,8 +229,8 @@ class cart_pole():
 
 
         tlun = 0
-        stt = 0
         while(1):
+            stt = 0
 
             if(tlun ==0):
                 EPSILON = 0.9
@@ -242,17 +241,12 @@ class cart_pole():
             elif(tlun ==2):
                 EPSILON = 0.9
                 qline = 0.5
-
-
             elif(tlun ==3):
                 EPSILON = 0.9
                 qline = 0.24
             elif(tlun ==4):
                 EPSILON = 1
                 qline = 0.24
-
-
-
 
             # self.epsilon = EPSILON
             dqn.epsilon = EPSILON
@@ -283,7 +277,7 @@ class cart_pole():
                     stt+=1
 
                     if(step>enough):
-                        okg = 1
+                        
                         break
 
                     if(step%2**9==0):
@@ -301,26 +295,18 @@ class cart_pole():
                 if(step>=enough):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
                     x,_,_,_ = state
                     if(abs(x)<qline):
-                        if(tlun>=3):
-                            if(abs(x)>qline/4):
-                                break
-                            else:
-                                print('x 太小也不好',x,qline)
-                        else:
-                            break
-            if(okg==1):
+                        break
 
-                print('合格',tlun,abs(x))
-                print('\a')
-                print('ep:',i_episode,'step',step,state)
+            print('合格',tlun,abs(x))
+            print('\a')
+            print('ep:',i_episode,'step',step,state)
 
-                if(tlun>=   4   ):
-                    
-                    with open('./a.pkl', "wb") as f:
-                        pickle.dump(dqn, f)
-                    break
+            if(tlun>=   4   ):
+                
+                with open('./a.pkl', "wb") as f:
+                    pickle.dump(dqn, f)
+                break
 
-                tlun +=1
-                okg =0
+            tlun +=1
 
 cart_pole().main()

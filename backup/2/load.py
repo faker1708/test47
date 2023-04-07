@@ -35,7 +35,7 @@ MEMORY_CAPACITY = 2000
 # render_on = 1
 
 
-env = gym.make('CartPole-v1', render_mode="human")
+# env = gym.make('CartPole-v1', render_mode="human")
 env = gym.make('CartPole-v1')
 env = env.unwrapped
 N_ACTIONS = env.action_space.n
@@ -180,8 +180,8 @@ while(1):
 
         if(plt_on ==1):
         
-            if(step%2**13==0):
-            # if(step%2**16==0):
+            # if(step%2**6==0):
+            if(step%2**16==0):
                 # print(step,state,next_state)
                 
                 t_list.append(step)
@@ -205,7 +205,6 @@ while(1):
             
 
         if done:
-
             break
         state = next_state
         step +=1
@@ -213,7 +212,7 @@ while(1):
 
 
 
-    print('ep:',i_episode,'step',step,state,next_state)
+    print('ep:',i_episode,'step',step)
     
     
     

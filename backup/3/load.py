@@ -205,7 +205,6 @@ while(1):
             
 
         if done:
-
             break
         state = next_state
         step +=1
@@ -213,7 +212,7 @@ while(1):
 
 
 
-    print('ep:',i_episode,'step',step,state,next_state)
+    print('ep:',i_episode,'step',step)
     
     
     

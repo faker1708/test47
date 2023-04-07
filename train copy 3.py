@@ -230,8 +230,8 @@ class cart_pole():
 
 
         tlun = 0
-        stt = 0
         while(1):
+            stt = 0
 
             if(tlun ==0):
                 EPSILON = 0.9
@@ -242,16 +242,12 @@ class cart_pole():
             elif(tlun ==2):
                 EPSILON = 0.9
                 qline = 0.5
-
-
             elif(tlun ==3):
                 EPSILON = 0.9
                 qline = 0.24
             elif(tlun ==4):
                 EPSILON = 1
                 qline = 0.24
-
-
 
 
             # self.epsilon = EPSILON
@@ -294,6 +290,10 @@ class cart_pole():
                         plt.plot(t_list,x_list,c='red')
 
                         plt.pause(0.001)
+                    if(step%2**12==0):
+                        pass
+                        # dqn.learn()
+                # for _ in range(2**6):
                 dqn.learn()
                 
                 i_episode+=1
@@ -301,14 +301,9 @@ class cart_pole():
                 if(step>=enough):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
                     x,_,_,_ = state
                     if(abs(x)<qline):
-                        if(tlun>=3):
-                            if(abs(x)>qline/4):
-                                break
-                            else:
-                                print('x 太小也不好',x,qline)
-                        else:
-                            break
+                        break
             if(okg==1):
+                okg =0
 
                 print('合格',tlun,abs(x))
                 print('\a')
@@ -321,6 +316,5 @@ class cart_pole():
                     break
 
                 tlun +=1
-                okg =0
 
 cart_pole().main()

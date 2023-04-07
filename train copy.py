@@ -159,7 +159,7 @@ class DQN(object):
 
         # 无界变换成有界有多种函数 ，这里随便写一种简单的。不是我们的重点。
 
-        # print(integral)
+        print(integral)
         if(abs(integral)>self.max_i):
             print('积分爆了')
             if integral>0:
@@ -196,9 +196,6 @@ class DQN(object):
 class cart_pole():
     def main(self):
 
-        okg = 0
-        enough = 2**13
-
 
         env = gym.make('CartPole-v1')
         env = env.unwrapped
@@ -230,8 +227,8 @@ class cart_pole():
 
 
         tlun = 0
-        stt = 0
         while(1):
+            stt = 0
 
             if(tlun ==0):
                 EPSILON = 0.9
@@ -242,17 +239,12 @@ class cart_pole():
             elif(tlun ==2):
                 EPSILON = 0.9
                 qline = 0.5
-
-
             elif(tlun ==3):
                 EPSILON = 0.9
                 qline = 0.24
             elif(tlun ==4):
                 EPSILON = 1
                 qline = 0.24
-
-
-
 
             # self.epsilon = EPSILON
             dqn.epsilon = EPSILON
@@ -282,45 +274,44 @@ class cart_pole():
                     step +=1
                     stt+=1
 
-                    if(step>enough):
-                        okg = 1
+                    if(step>2**16):
+                        
                         break
 
-                    if(step%2**9==0):
+                    if(step%2**13==0):
                         # print(step,state,next_state)
 
                         t_list.append(stt)
                         x_list.append(abs(x))
+                        xd_list.append(xd)
+                        th_list.append(th)
+                        thd_list.append(thd)
                         plt.plot(t_list,x_list,c='red')
 
-                        plt.pause(0.001)
+                        # plt.plot(t_list,xd_list,c='yellow')
+                        # plt.plot(t_list,th_list,c='green')
+                        # plt.plot(t_list,thd_list,c='blue')
+                        plt.pause(0.1)
                 dqn.learn()
                 
                 i_episode+=1
 
-                if(step>=enough):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
+                if(step>=2**12):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
                     x,_,_,_ = state
                     if(abs(x)<qline):
-                        if(tlun>=3):
-                            if(abs(x)>qline/4):
-                                break
-                            else:
-                                print('x 太小也不好',x,qline)
-                        else:
+                        if(step>2**16):
                             break
-            if(okg==1):
 
-                print('合格',tlun,abs(x))
-                print('\a')
-                print('ep:',i_episode,'step',step,state)
+            print('合格',tlun,abs(x))
+            print('\a')
+            print('ep:',i_episode,'step',step,state)
 
-                if(tlun>=   4   ):
-                    
-                    with open('./a.pkl', "wb") as f:
-                        pickle.dump(dqn, f)
-                    break
+            if(tlun>=   4   ):
+                
+                with open('./a.pkl', "wb") as f:
+                    pickle.dump(dqn, f)
+                break
 
-                tlun +=1
-                okg =0
+            tlun +=1
 
 cart_pole().main()

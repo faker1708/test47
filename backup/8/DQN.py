@@ -1,13 +1,4 @@
-"""
-View more, visit my tutorial page: https://mofanpy.com/tutorials/
-My Youtube Channel: https://www.youtube.com/user/MorvanZhou
-More about Reinforcement learning: https://mofanpy.com/tutorials/machine-learning/reinforcement-learning/
 
-Dependencies:
-torch: 0.4
-gym: 0.8.1
-numpy
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,33 +9,10 @@ import matplotlib.pyplot as plt
 
 import pickle
 
-# 现在在研究收敛
 
+# 本地类
+import Net_2
 
-class Net(nn.Module):
-    def __init__(self, ):
-
-
-
-
-        super(Net, self).__init__()
-        # 64 32
-
-        N_ACTIONS = 2
-        N_STATES = 4
-
-        self.fc1 = nn.Linear(N_STATES, 50)
-        self.fc1.weight.data.normal_(0, 0.1)   # initialization
-        self.out = nn.Linear(50, N_ACTIONS)
-        self.out.weight.data.normal_(0, 0.1)   # initialization
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = F.relu(x)
-        # x = self.fc2(x)
-        # x = F.relu(x)
-        actions_value = self.out(x)
-        return actions_value
 
 
 class DQN(object):
@@ -60,7 +28,7 @@ class DQN(object):
         self.N_ACTIONS = mlp_architecture[-1]
         lr = 0.01
 
-        self.eval_net, self.target_net = Net(), Net()
+        self.eval_net, self.target_net = Net_2.Net(), Net_2.Net()
 
         self.learn_step_counter = 0                                     # for target updating
         self.memory_counter = 0                                         # for storing memory
@@ -159,7 +127,7 @@ class DQN(object):
 
         # 无界变换成有界有多种函数 ，这里随便写一种简单的。不是我们的重点。
 
-        print(integral)
+        # print(integral)
         if(abs(integral)>self.max_i):
             print('积分爆了')
             if integral>0:
@@ -192,126 +160,3 @@ class DQN(object):
 
         return reward
     
-
-class cart_pole():
-    def main(self):
-
-
-        env = gym.make('CartPole-v1')
-        env = env.unwrapped
-        N_ACTIONS = env.action_space.n
-        N_STATES = env.observation_space.shape[0]
-
-        mlp_architecture = [N_STATES,50,N_ACTIONS]
-
-        dqn = DQN(mlp_architecture) # init 
-
-
-        EPSILON = 0.9
-
-        plt_on = 1  # 是否显示图表
-
-        if(plt_on ==1):
-            plt.ion()
-            plt.figure(1)
-            t_list = list()
-            # result_list=list()
-
-            t_list = list()
-            
-            x_list = list()
-            xd_list = list()
-            th_list = list()
-            thd_list = list()
-
-
-
-        tlun = 0
-        while(1):
-            stt = 0
-
-            if(tlun ==0):
-                EPSILON = 0.9
-                qline = 2
-            elif(tlun ==1):
-                EPSILON = 0.9
-                qline = 1
-            elif(tlun ==2):
-                EPSILON = 0.9
-                qline = 0.5
-            elif(tlun ==3):
-                EPSILON = 0.9
-                qline = 0.24
-            elif(tlun ==4):
-                EPSILON = 1
-                qline = 0.24
-
-            # self.epsilon = EPSILON
-            dqn.epsilon = EPSILON
-
-
-            i_episode = 0
-            while(1):
-                state,_ = env.reset()
-                step = 0
-
-                while(1):
-                    env.render()
-                    action = dqn.choose_action(state)
-
-                    x,xd,th,thd = state
-
-                    next_state, _, done, _, _ = env.step(action)
-
-                    
-                    reward = dqn.reward_f(next_state)
-
-                    dqn.store_transition(state, action, reward, next_state)
-
-                    if done:
-                        break
-                    state = next_state
-                    step +=1
-                    stt+=1
-
-                    if(step>2**16):
-                        
-                        break
-
-                    if(step%2**13==0):
-                        # print(step,state,next_state)
-
-                        t_list.append(stt)
-                        x_list.append(abs(x))
-                        xd_list.append(xd)
-                        th_list.append(th)
-                        thd_list.append(thd)
-                        plt.plot(t_list,x_list,c='red')
-
-                        # plt.plot(t_list,xd_list,c='yellow')
-                        # plt.plot(t_list,th_list,c='green')
-                        # plt.plot(t_list,thd_list,c='blue')
-                        plt.pause(0.1)
-                dqn.learn()
-                
-                i_episode+=1
-
-                if(step>=2**12):    # 随便训练一个2万的模型就能稳定运行了.本实验可以宣布结束了.
-                    x,_,_,_ = state
-                    if(abs(x)<qline):
-                        if(step>2**16):
-                            break
-
-            print('合格',tlun,abs(x))
-            print('\a')
-            print('ep:',i_episode,'step',step,state)
-
-            if(tlun>=   4   ):
-                
-                with open('./a.pkl', "wb") as f:
-                    pickle.dump(dqn, f)
-                break
-
-            tlun +=1
-
-cart_pole().main()

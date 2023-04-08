@@ -88,7 +88,8 @@ class DQN(object):
         self.memory_counter += 1
 
     def learn(self):
-        # print('dqn.learn()')
+
+
         TARGET_REPLACE_ITER = 100
         MEMORY_CAPACITY = 2000
         BATCH_SIZE = 32
@@ -97,14 +98,11 @@ class DQN(object):
 
         GAMMA = 0.9
 
-
-        # target parameter update
         if self.learn_step_counter % TARGET_REPLACE_ITER == 0:
-            # self.target_net.load_state_dict(self.eval_net.state_dict())
+            print('拷贝')
             self.target_net = copy.deepcopy(self.eval_net)
         self.learn_step_counter += 1
 
-        # sample batch transitions
         sample_index = np.random.choice(MEMORY_CAPACITY, BATCH_SIZE)
         b_memory = self.memory[sample_index, :]
         b_s = torch.FloatTensor(b_memory[:, :N_STATES])
@@ -113,24 +111,26 @@ class DQN(object):
         b_s_ = torch.FloatTensor(b_memory[:, -N_STATES:])
 
 
-        # q_eval w.r.t the action in experience
+        # 矩阵转置
+        b_s = b_s.permute(1,0)     
+        b_a = b_a.permute(1,0)      
+        b_s_ = b_s_.permute(1,0)      
+        b_r = b_r.permute(1,0)      
 
-
+        
         xxx = self.eval_net.forward(b_s)
-        q_eval = xxx.gather(1, b_a)  # shape (batch, 1)
-        q_next = self.target_net(b_s_).detach()     # detach from graph, don't backpropagate
-        q_target = b_r + GAMMA * q_next.max(1)[0].view(BATCH_SIZE, 1)   # shape (batch, 1)
 
+        q_eval = xxx.gather(1, b_a)
+        q_next = self.target_net.test(b_s_)
+
+        max_next_q = q_next.max(0)[0].view( 1,BATCH_SIZE)
+        q_target = b_r + GAMMA* max_next_q
+        
 
         loss_f= self.eval_net.loss_f
         loss = loss_f(q_eval, q_target)
-        print('dqn learn() loss',float(loss))
-
-        # loss = self.loss_func(q_eval, q_target)
-
-        # self.optimizer.zero_grad()
-        # loss.backward()
-        # self.optimizer.step()
+        loss.backward()
+        self.eval_net.update()
 
 
     def get_i(self):

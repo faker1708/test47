@@ -101,6 +101,7 @@ class cart_pole():
                     dqn.store_transition(state, action, reward, next_state)
 
                     if done:
+                        print('小车输了',i_episode,step,state)
                         break
                     state = next_state
                     step +=1

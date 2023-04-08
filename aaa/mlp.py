@@ -166,3 +166,9 @@ class mlp():
 
             y = x
         return y
+
+
+    # little tool
+    def trans(self,x):
+        x = torch.unsqueeze(x, dim=1)
+        return x
